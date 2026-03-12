@@ -10,3 +10,4 @@ schedule==1.2.2
 aiohttp==3.9.5
 asyncio==3.4.3
 rich==13.7.1
+google-genai==1.5.0
