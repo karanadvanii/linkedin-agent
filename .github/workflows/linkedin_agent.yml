@@ -1,0 +1,43 @@
+name: LinkedIn Agent
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'  # Monday 7am UTC (8am Germany, 12:30pm India)
+    - cron: '0 7 * * 4'  # Thursday 7am UTC
+  workflow_dispatch:      # Manual trigger from GitHub UI anytime
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write credentials.json
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > config/credentials.json
+
+      - name: Write .env file
+        run: |
+          cat > config/.env << EOF
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}
+          RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}
+          LINKEDIN_ACCESS_TOKEN=${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_PERSON_URN=${{ secrets.LINKEDIN_PERSON_URN }}
+          GOOGLE_CREDENTIALS_PATH=config/credentials.json
+          EOF
+
+      - name: Run LinkedIn Agent
+        run: python main.py
