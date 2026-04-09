@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from rich import print as rprint
 
 
-def run_poster(enriched_topic: dict) -> bool:
+def run_poster(enriched_topic: dict) -> tuple[bool, str]:
     """
     Full approval loop:
     1. Show 3 draft variations
@@ -35,6 +35,7 @@ def run_poster(enriched_topic: dict) -> bool:
         # Step 2: Approval loop for selected draft
         edit_cycles = 0
         max_edits = 3
+        action = None
 
         while edit_cycles < max_edits:
             action = send_draft_for_approval(topic, selected_draft, row_index)
@@ -45,11 +46,12 @@ def run_poster(enriched_topic: dict) -> bool:
                     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
                     mark_posted(row_index, timestamp)
                     rprint(f"[bold green]🎉 Post published successfully![/bold green]")
-                    return True
+                    post_url = result.get("post_url", "")
+                    return True, post_url
                 else:
                     rprint(f"[red]❌ LinkedIn posting failed[/red]")
                     update_row_status(row_index, "post_failed")
-                    return False
+                    return False, ""
 
             elif action == "edit":
                 edit_request = send_edit_request()
@@ -67,12 +69,11 @@ def run_poster(enriched_topic: dict) -> bool:
             elif action == "reject":
                 update_row_status(row_index, "rejected")
                 rprint(f"[red]🚫 Post rejected[/red]")
-                return False
+                return False, ""
 
         # Regenerate all 3 drafts if requested
         if action == "regenerate":
             rprint(f"[yellow]🔄 Regenerating all 3 drafts...[/yellow]")
-            from src.prompts.post_writer import build_user_prompt
             drafts = []
             for variation_instruction in VARIATION_PROMPTS:
                 user_prompt = build_user_prompt(topic, research, variation_instruction)
@@ -81,4 +82,4 @@ def run_poster(enriched_topic: dict) -> bool:
 
     rprint(f"[red]❌ Max cycles reached[/red]")
     update_row_status(row_index, "rejected")
-    return False
+    return False, ""

@@ -40,7 +40,7 @@ def send_error(step: str, error: str):
         f"❌ *LinkedIn Agent Error*\n\n"
         f"*Step:* {step}\n"
         f"*Error:* {error}\n\n"
-        f"Check GitHub Actions logs for details."
+        f"Check your terminal logs for details."
     )
     send_notification(message)
 
@@ -383,6 +383,13 @@ async def _send_and_wait(topic: str, draft: str, row_index: int, result: dict):
     ])
     response_event = asyncio.Event()
 
+    _ACTION_LABELS = {
+        "approve": "✅ Posting to LinkedIn now...",
+        "edit": "✏️ Got it! What should I change?",
+        "regenerate": "🔄 Regenerating all 3 drafts...",
+        "reject": "🚫 Post rejected. No worries!",
+    }
+
     async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         data = query.data
@@ -397,9 +404,10 @@ async def _send_and_wait(topic: str, draft: str, row_index: int, result: dict):
                 await query.edit_message_reply_markup(reply_markup=None)
             except Exception:
                 pass
+            confirmation = _ACTION_LABELS.get(action, "✅ Got it!")
             await context.bot.send_message(
                 chat_id=settings.TELEGRAM_CHAT_ID,
-                text=f"Got it! {action} ✅",
+                text=confirmation,
             )
             response_event.set()
 
