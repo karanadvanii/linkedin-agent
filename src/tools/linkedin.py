@@ -4,9 +4,15 @@ from rich import print as rprint
 
 LINKEDIN_API_URL = "https://api.linkedin.com/v2/ugcPosts"
 
+LINKEDIN_MAX_CHARS = 3000
+
+
 def post_to_linkedin(text: str) -> dict:
     """Post text content to LinkedIn as the authenticated user"""
-    
+    if len(text) > LINKEDIN_MAX_CHARS:
+        rprint(f"[yellow]⚠️  Post is {len(text)} chars — LinkedIn limit is {LINKEDIN_MAX_CHARS}. Truncating...[/yellow]")
+        text = text[:LINKEDIN_MAX_CHARS - 3] + "..."
+
     headers = {
         "Authorization": f"Bearer {settings.LINKEDIN_ACCESS_TOKEN}",
         "Content-Type": "application/json",
@@ -34,12 +40,13 @@ def post_to_linkedin(text: str) -> dict:
         response.raise_for_status()
         data = response.json()
         post_id = data.get("id", "unknown")
+        post_url = f"https://www.linkedin.com/feed/update/{post_id}/"
         rprint(f"[green]🚀 Posted to LinkedIn! Post ID: {post_id}[/green]")
-        return {"success": True, "post_id": post_id}
+        return {"success": True, "post_id": post_id, "post_url": post_url}
 
     except requests.exceptions.HTTPError as e:
-        rprint(f"[red]❌ LinkedIn post failed: {e.response.status_code} {e.response.text}[/red]")
-        return {"success": False, "error": str(e)}
+        rprint(f"[red]❌ LinkedIn post failed: {e.response.status_code}[/red]")
+        return {"success": False, "error": f"HTTP {e.response.status_code}"}
     except Exception as e:
         rprint(f"[red]❌ LinkedIn error: {e}[/red]")
         return {"success": False, "error": str(e)}

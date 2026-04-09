@@ -10,11 +10,21 @@ from src.tools.telegram import (
     ask_for_own_idea,
     ask_topic_selection
 )
+from config.settings import settings
 from rich import print as rprint
 
 
+def _print_banner() -> None:
+    rprint("\n[bold cyan]╔══════════════════════════════════════╗[/bold cyan]")
+    rprint("[bold cyan]║   LinkedIn AI Agent  v1.0            ║[/bold cyan]")
+    rprint("[bold cyan]║   Powered by Gemini AI               ║[/bold cyan]")
+    rprint("[bold cyan]╚══════════════════════════════════════╝[/bold cyan]")
+    rprint(f"[dim]  Author: {settings.AUTHOR_NAME} · {settings.AUTHOR_ROLE}[/dim]\n")
+
+
 def run_pipeline():
-    rprint("\n[bold]🤖 LinkedIn Agent — Starting Pipeline[/bold]\n")
+    _print_banner()
+    settings.validate()
 
     try:
         # Step 1: Ask mode — auto or own idea
@@ -79,14 +89,15 @@ def run_pipeline():
 
         # Step 7: Approve and post
         try:
-            success = run_poster(enriched)
+            success, post_url = run_poster(enriched)
         except Exception as e:
             send_error("poster", str(e))
             update_row_status(topic_row["row_index"], "error")
             raise
 
         if success:
-            send_notification(f"🚀 *Posted to LinkedIn!*\n\n*Topic:* {topic}")
+            url_line = f"\n\n[View post]({post_url})" if post_url else ""
+            send_notification(f"🚀 *Posted to LinkedIn!*\n\n*Topic:* {topic}{url_line}")
         else:
             send_notification(f"🚫 *Not posted.*\n\n*Topic:* {topic}")
 
