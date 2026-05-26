@@ -1,9 +1,6 @@
 name: LinkedIn Agent
 
 on:
-  schedule:
-    - cron: '0 15 * * 1'  # Monday 3pm UTC = 4pm Germany (CET)
-    - cron: '0 15 * * 4'  # Thursday 3pm UTC = 4pm Germany (CET)
   workflow_dispatch:     # Manual trigger from GitHub UI anytime
 
 jobs:
